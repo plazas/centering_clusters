@@ -51,6 +51,9 @@ def weighted_mean (dsum_vec, wsum_vec):
     assert(len(dsum_vec)==len(wsum_vec))
     num = nansum (dsum_vec, axis=0)
     den = nansum (wsum_vec, axis=0)
+    if den.all() == 0.:
+        print "Error in function 'wieghted_mean'. den==0. Quitting."
+        sys.exit(1)
     return num/den
 
 def weighted_cov ( dsum_x, dsum_y, wsum_x, wsum_y):
@@ -63,6 +66,7 @@ def weighted_cov ( dsum_x, dsum_y, wsum_x, wsum_y):
 
 def compute_rcoeff ( dsum_best_vec , dsum_2best_vec, wsum_best_vec, wsum_2best_vec ):
     """
+    Function to compute the correlation coefficient based on the covariance matrix.
     r=cov (x,y, w_x, w_y) /  sqrt (cov (x,x, w_x, w_x) *cov(y,y, w_y, w_y))
     """
     dsum_best_vec , dsum_2best_vec = np.array(dsum_best_vec), np.array(dsum_2best_vec)
@@ -91,8 +95,8 @@ def true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambd
     binning_prob =  compute_binning_probability (lambda1, lambda1_err, lambda2, lambda2_err, p1, p2)
     delta_sigma1 = dsum1/wsum1   ### ?? Should be only delta_sigma, not dsum 
     delta_sigma2 = dsum2/wsum2  
-    print delta_sigma1.shape
-    print delta_sigma2.shape
+    #print delta_sigma1.shape
+    #print delta_sigma2.shape
     ### Define vectors and matrices
     # reshape probability from nclusters to (nclusters, nradial bins) 
     p=[]
@@ -103,13 +107,13 @@ def true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambd
     p2=1-p1
     X = np.array ([ delta_sigma1, delta_sigma2]) 
     P = np.array ([p1,p2])
-    print X.shape
-    print P.shape
-    print "wsum1.shape", wsum1.shape
+    #print X.shape
+    #print P.shape
+    #print "wsum1.shape", wsum1.shape
     rcoeff = compute_rcoeff (dsum1, dsum2, wsum1, wsum2)
-    print "rcoeff: "
-    print rcoeff.shape
-    print rcoeff
+    #print "rcoeff: "
+    #print rcoeff.shape
+    #print rcoeff
     #fig=plt.figure()
     #plt.plot(rcoeff, 'r')
     #pp.savefig()
@@ -117,9 +121,9 @@ def true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambd
     c12=rcoeff*np.sqrt (c11*c22) 
     #C=np.array ( [[c11,c12], [c12,c22]] )
     S= np.array ( [[c22,-c12],[-c12, c11]]  ) / (c11*c22 - c12**2)   # inverse of C
-    print "S.shape", S.shape
-    print "X.shape", X.shape
-    print "P.shape", P.shape
+    #print "S.shape", S.shape
+    #print "X.shape", X.shape
+    #print "P.shape", P.shape
     Y_T = S[0][0]*P[0]*X[0]  + S[0][1]*P[1]*X[0]  + S[1][0]*P[0]*X[1]  + S[1][1]*P[1]*X[1]
     Y_F = S[0][0]*(1-P[0])*X[0]  + S[0][1]*(1-P[1])*X[0]  + S[1][0]*(1-P[0])*X[1]  + S[1][1]*(1-P[1])*X[1]
     A=S[0][0]*P[0]*P[0]  + S[0][1]*P[0]*P[1]  + S[1][0]*P[0]*P[1]  + S[1][1]*P[1]*P[1]
@@ -135,14 +139,14 @@ def true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambd
     A=binning_prob*A
     B=binning_prob*B
     D=binning_prob*D
-    print "len(Y_T), len(Y_F), len(A), len(B), len(D)", len(Y_T), len(Y_F), len(A), len(B), len(D)
-    print "Y_T.shape, Y_F.shape, A.shape, B.shape, D.shape", Y_T.shape, Y_F.shape, A.shape, B.shape, D.shape
+    #print "len(Y_T), len(Y_F), len(A), len(B), len(D)", len(Y_T), len(Y_F), len(A), len(B), len(D)
+    #print "Y_T.shape, Y_F.shape, A.shape, B.shape, D.shape", Y_T.shape, Y_F.shape, A.shape, B.shape, D.shape
     Y_T=np.nansum( Y_T, axis=0)
     Y_F=np.nansum(Y_F, axis=0)
     A=np.nansum(A,axis=0)
     B=np.nansum(B,axis=0)
     D=np.nansum(D,axis=0)
-    print "len(Y_T), len(Y_F), len(A), len(B), len(D)", len(Y_T), len(Y_F), len(A), len(B), len(D)
+    #print "len(Y_T), len(Y_F), len(A), len(B), len(D)", len(Y_T), len(Y_F), len(A), len(B), len(D)
     print "Y_T.shape, Y_F.shape, A.shape, B.shape, D.shape", Y_T.shape, Y_F.shape, A.shape, B.shape, D.shape
     det=(1./(A*D-B*B))
     X_T=det*(D*Y_T - B*Y_F) 
@@ -154,5 +158,5 @@ def true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambd
     print "X_F", X_F
     #### TEMPORAL> Create a covariance matrix with zeroes as a place holder. 
     cov = np.zeros( (nradial_bins, nradial_bins) )   ### How to calculate the errors?? 
-    return r, X_T, X_F, cov
+    return r, X_T, X_F, cov, rcoeff
 

@@ -38,6 +38,8 @@ id1=data1['mem_match_id']
 lambda1=data1['lambda_chisq']
 lambda1_err=data1['lambda_chisq_e']
 rsum1=data1['rsum']
+npair1=data1['npair']
+rsum1/=npair1  # mean radius
 dsum1=data1['dsum']
 wsum1=data1['wsum']
 mask_wsum1=[]
@@ -58,6 +60,8 @@ lambda2=data2['lambda_chisq']
 lambda2_err=data2['lambda_chisq_e']
 #p2= 1 - p1
 rsum2=data2['rsum']
+npair2=data2['npair']
+rsum2/=npair2   #mean radius
 dsum2=data2['dsum']
 wsum2=data2['wsum']
 mask_wsum2=[]
@@ -71,6 +75,7 @@ osum2=data2['osum']
 
 
 ## MATCH clusters by ID. Need to do two masks. The length of teh catalogs might be different. 
+print "Matching the objects from the two catalogs. "
 
 mask_id1= np.in1d (id1, id2) 
 
@@ -96,18 +101,36 @@ osum2=osum2[mask_id2]
 assert ( np.all(id1 == id2) ) # If not True, then they are not matched! 
 p2 = 1 -p1
 
-r, X_T, X_F, cov = true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambda2, lambda2_err, p1, p2) 
-
+r, X_T, X_F, cov , rcoeff = true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambda2, lambda2_err, p1, p2)
+#For now, cov is just zeroes.
 errors = np.diag (cov)
 
+#plot parameters
+loc_label='lower left'
+prop = fm.FontProperties(size=9)
+marker_size=8
+
+## Plot correlation coefficient first
 fig = plt.figure()
 ax = fig.add_subplot(111)
-plt.errorbar (r, X_T, yerr=None, fmt='b.-', label='True Profile')
-plt.errorbar (r, X_F, yerr=None, fmt='r.-', label='False Profile')
-plt.xlabel ('r')
-plt.ylabel(r'$\Delta \Sigma$')
+plt.errorbar (r, rcoeff, yerr=None, fmt='g.-', label='correlation', markersize=marker_size)
+plt.xlabel ('R (h$^{-1}$ Mpc)')
+plt.ylabel(r'Correlation Coefficient')
+plt.xscale('log')
+ax.legend(loc=loc_label , fancybox=True, ncol=1, numpoints=1, prop = prop)
+pp.savefig()
+
+
+## Now plot the Delta Sigma profiles about the true and the false centers
+fig = plt.figure()
+ax = fig.add_subplot(111)
+plt.errorbar (r, X_T, yerr=None, fmt='b.-', label='Profile about T center', markersize=marker_size)
+plt.errorbar (r, X_F, yerr=None, fmt='r.-', label='Profile about F center', markersize=marker_size)
+plt.xlabel ('R (h$^{-1}$ Mpc)')
+plt.ylabel(r'$\Delta \Sigma$ (M$_{\odot}$ h/pc$^2$)')
 plt.xscale('log')
 plt.yscale('log')
+ax.legend(loc=loc_label , fancybox=True, ncol=1, numpoints=1, prop = prop)
 pp.savefig()
 pp.close()
 
