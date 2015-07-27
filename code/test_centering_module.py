@@ -24,7 +24,7 @@ import pyfits
 
 if (len(sys.argv) != 4 ):
     print >>sys.stderr, "Usage: centering.py <best_center_cat.fits> <second_best_center_cat.fits> <ofname.pdf> "
-    print >>sys.stderr, "The catalogs should have the fields: 'rsum', 'wsum', 'dsum', 'mem_match_id', 'lambda_chisq', 'lambda_chisq_e', each one with nbins entries. There should be an entry 'p_cen' with the probabilities of the centers, too. "
+    print >>sys.stderr, "The catalogs should have the fields: 'rsum', 'dsensum', 'dsum', 'mem_match_id', 'lambda_chisq', 'lambda_chisq_e', each one with nbins entries. There should be a field 'p_cen' with the probabilities of the centers, too. "
     sys.exit(1)
 
 data1  = pyfits.open (sys.argv[1])[1].data
@@ -40,7 +40,7 @@ lambda1=data1['lambda_chisq']
 lambda1_err=data1['lambda_chisq_e']
 rsum1=data1['rsum']
 dsum1=data1['dsum']
-wsum1=data1['wsum']
+wsum1=data1['dsensum']
 rsum1/=wsum1
 mask_wsum1=[]
 for x in wsum1:
@@ -60,7 +60,7 @@ lambda2_err=data2['lambda_chisq_e']
 #p2= 1 - p1
 rsum2=data2['rsum']
 dsum2=data2['dsum']
-wsum2=data2['wsum']
+wsum2=data2['dsensum']
 rsum2/=wsum2
 mask_wsum2=[]
 for x in wsum2:
@@ -84,7 +84,6 @@ p1=p1[mask_id1]
 rsum1=rsum1[mask_id1]
 dsum1=dsum1[mask_id1]
 wsum1=wsum1[mask_id1]
-osum1=osum1[mask_id1]
 
 mask_id2= np.in1d (id2, id1)
 id2=id2[mask_id2]
@@ -93,17 +92,15 @@ lambda2_err=lambda2_err[mask_id2]
 rsum2=rsum2[mask_id2]
 dsum2=dsum2[mask_id2]
 wsum2=wsum2[mask_id2]
-osum2=osum2[mask_id2]
 
 assert ( np.all(id1 == id2) ) # If not True, then they are not matched! 
-p2 = 1-p1
 
-r, X_T, X_F, cov , rcoeff = true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambda2, lambda2_err, p1, p2)
+r, X_T, X_F, cov , rcoeff = true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambda2, lambda2_err, p1)
 #For now, cov is just zeroes.
 errors = np.diag (cov)
 
 #plot parameters
-loc_label='lower left'
+loc_label='upper right'
 prop = fm.FontProperties(size=9)
 marker_size=8
 

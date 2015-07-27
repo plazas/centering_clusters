@@ -25,7 +25,7 @@ A. Plazas (JPL, July-2015)
 """
 
 
-def compute_binning_probability ( lambda_best, lambda_err_best, lambda_2best, lambda_err_2best, p1, p2):
+def compute_binning_probability ( lambda_best, lambda_err_best, lambda_2best, lambda_err_2best, p1):
     """
     This function computes the binning probability (Eqs. 18 and 19?)
     Computes the binning probability q_a^\alpha for each cluster alpha. One  number per cluster.
@@ -40,7 +40,7 @@ def compute_binning_probability ( lambda_best, lambda_err_best, lambda_2best, la
     umax= (lambda_max - lambda_2best)/math.sqrt(2.0)/lambda_err_2best     #;; NOTE: catalogs should include lambda_chisq error for alternative centers. ;; using error from original center for now.
     umin= (lambda_min - lambda_2best)/math.sqrt(2.0)/lambda_err_2best
     binprob2=0.5*erf(umax) - 0.5*erf(umin)
-    binprob = p1*binprob1 + p2*binprob2
+    binprob = p1*binprob1 + (1.-p1)*binprob2
     return binprob
 
 
@@ -80,19 +80,19 @@ def compute_rcoeff ( dsum_best_vec , dsum_2best_vec, wsum_best_vec, wsum_2best_v
     rcoeff = weighted_cov (dsum_best_vec, dsum_2best_vec, wsum_best_vec, wsum_2best_vec)   / (rms1*rms2)
     return rcoeff
 
-def true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambda2, lambda2_err, p1, p2):
+def true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambda2, lambda2_err, p1):
     """
     rsum1: 
     dsum1,2:
     wsum1,2:
     lambda1,2:
     lambda1,2_err:
-    p1,2:
+    p1:
     """
 
     ### Derived quantities
     ## binning probability
-    binning_prob =  compute_binning_probability (lambda1, lambda1_err, lambda2, lambda2_err, p1, p2)
+    binning_prob =  compute_binning_probability (lambda1, lambda1_err, lambda2, lambda2_err, p1)
     delta_sigma1 = dsum1/wsum1   ### ?? Should be only delta_sigma, not dsum 
     delta_sigma2 = dsum2/wsum2  
     #print delta_sigma1.shape
@@ -104,9 +104,8 @@ def true_profile (rsum1, dsum1, dsum2, wsum1, wsum2, lambda1, lambda1_err, lambd
     for x in p1:
         p.append (np.repeat (x, nradial_bins))
     p1=np.array(p)
-    p2=1-p1
     X = np.array ([ delta_sigma1, delta_sigma2]) 
-    P = np.array ([p1,p2])
+    P = np.array ([p1,1-p1])
     #print X.shape
     #print P.shape
     #print "wsum1.shape", wsum1.shape
